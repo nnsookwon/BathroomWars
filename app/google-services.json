@@ -1,0 +1,83 @@
+{
+  "project_info": {
+    "project_number": "1073930642899",
+    "firebase_url": "https://fir-tutorial-f386a.firebaseio.com",
+    "project_id": "fir-tutorial-f386a",
+    "storage_bucket": "fir-tutorial-f386a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1073930642899:android:38630f3b39a18e07",
+        "android_client_info": {
+          "package_name": "io.nnsookwon.dropping_matters"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1073930642899-njtsn17i5e4c03fkdgg001te9rp91d62.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDSSHJs24WzAOUUqgP7z6rJSxONOLRdNU"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1073930642899-njtsn17i5e4c03fkdgg001te9rp91d62.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1073930642899:android:7c7c25b86c7a53d3",
+        "android_client_info": {
+          "package_name": "io.nnsookwon.bathroom_buddies"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1073930642899-njtsn17i5e4c03fkdgg001te9rp91d62.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBDSSHJs24WzAOUUqgP7z6rJSxONOLRdNU"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1073930642899-njtsn17i5e4c03fkdgg001te9rp91d62.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

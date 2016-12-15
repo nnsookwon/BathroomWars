@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/button_show_personal_history"
+        android:title="@string/show_personal_history"
+        android:checkable="true"
+        android:checked="false"/>
+
+    <item
+        android:id="@+id/button_sign_out"
+        android:title="@string/sign_out"/>
+
+
+
+</menu>

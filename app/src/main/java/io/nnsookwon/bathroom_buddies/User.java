@@ -10,6 +10,7 @@ public class User {
 
     private String userName;
     private String uId;
+    private String providerId;
     private String photoUrl;
     private ArrayList<RestroomVisit> restroomVisits = new ArrayList<>();
 
@@ -17,9 +18,10 @@ public class User {
 
     }
 
-    public User(String mUserName, String mUid, String mPhotoUrl){
+    public User(String mUserName, String mUid, String mProviderId, String mPhotoUrl){
         userName = mUserName;
         uId = mUid;
+        providerId = mProviderId;
         photoUrl = mPhotoUrl;
     }
 
@@ -29,6 +31,10 @@ public class User {
 
     public void setUid(String mUid){
         uId = mUid;
+    }
+
+    public void setProviderId(String mProviderId){
+        providerId = mProviderId;
     }
 
     public void setPhotoUrl(String mPhotoUrl) {
@@ -45,7 +51,9 @@ public class User {
     public String getUid() {
         return uId;
     }
-
+    public String getProviderId(){
+        return providerId;
+    }
     public String getPhotoUrl() {
         return photoUrl;
     }

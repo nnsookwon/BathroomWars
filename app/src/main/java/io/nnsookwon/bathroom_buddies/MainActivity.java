@@ -23,6 +23,11 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.facebook.AccessToken;
+import com.facebook.FacebookSdk;
+import com.facebook.GraphRequest;
+import com.facebook.GraphResponse;
+import com.facebook.HttpMethod;
 import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
@@ -40,16 +45,22 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.maps.android.MarkerManager;
+import com.google.maps.android.clustering.ClusterItem;
+import com.google.maps.android.clustering.ClusterManager;
 
-import java.text.SimpleDateFormat;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 import static com.google.android.gms.common.api.GoogleApiClient.Builder;
@@ -89,7 +100,8 @@ public class MainActivity extends AppCompatActivity implements
     private GeoFire restroomsGeoFire;
     private GeoQuery geoQuery;
 
-    private Map<String,Marker> markers;
+    private Map<String, ClusterMarkerLocation> restroomLocationMarkers;
+    private Map<String, ClusterMarkerLocation> restroomPersonalMarkers;
 
     private Button buttonRecordRestroomVisit;
     private Button buttonCreateNewRestroomLocation;
@@ -99,6 +111,9 @@ public class MainActivity extends AppCompatActivity implements
     private User user;
     private Restroom restroomSelected;
     private boolean showPersonalHistory;
+
+    private MarkerManager markerManager;
+    private ClusterManager<ClusterItem> clusterManager;
 
 
     @Override
@@ -111,7 +126,9 @@ public class MainActivity extends AppCompatActivity implements
         showPersonalHistory = false;
         initFirebase();
 
-        markers = new HashMap<String, Marker>();
+        restroomLocationMarkers = new HashMap<>();
+        restroomPersonalMarkers = new HashMap<>();
+
         userLatitude = 0;
         userLongitude = 0;
         SupportMapFragment mapFragment =
@@ -148,6 +165,18 @@ public class MainActivity extends AppCompatActivity implements
                 startActivity(new Intent(this, SignInActivity.class));
                 finish();
                 break;
+            case R.id.button_battle:
+                BathroomBattleHandler handler = new BathroomBattleHandler(gMap, user.getUserName());
+                removeMarkers();
+                geoQuery.removeAllListeners();
+                showFacebookFriends();
+
+                for(Map.Entry<String, ClusterMarkerLocation> entry: restroomPersonalMarkers.entrySet()){
+                    handler.addMarker(entry.getKey(), entry.getValue().getPosition());
+                    Log.d("Battle", entry.getKey() + " " + entry.getValue().getPosition());
+                }
+               // gMap.clear();
+                break;
         }
         return true;
     }
@@ -157,9 +186,6 @@ public class MainActivity extends AppCompatActivity implements
         usersDatabaseRef =  FirebaseDatabase.getInstance().getReference("Users");
         restroomsDatabaseRef = FirebaseDatabase.getInstance().getReference("Restrooms");
         restroomsGeoFire = new GeoFire(FirebaseDatabase.getInstance().getReference("Restrooms GeoFire"));
-
-
-        setValueEventListener();
 
         // Initialize Firebase Auth
         mFirebaseAuth = FirebaseAuth.getInstance();
@@ -174,9 +200,8 @@ public class MainActivity extends AppCompatActivity implements
         } else {
             user.setUserName(mFirebaseUser.getDisplayName());
             user.setUid(mFirebaseUser.getUid());
+            user.setProviderId(mFirebaseUser.getProviderId());
             user.setPhotoUrl(mFirebaseUser.getPhotoUrl().toString());
-
-
             usersDatabaseRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 //check if user is in database yet
                 @Override
@@ -188,10 +213,9 @@ public class MainActivity extends AppCompatActivity implements
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-
                 }
             });
-
+            setValueEventListener();
         }
     }
 
@@ -242,16 +266,18 @@ public class MainActivity extends AppCompatActivity implements
 
                 if (newLocationName.length() > 0) {
                     //input must be more than just spaces
-                    Marker marker = gMap.addMarker(new MarkerOptions()
+                    /*Marker marker = gMap.addMarker(new MarkerOptions()
                             .position(new LatLng(userLatitude,userLongitude))
                             .title(newLocationName)
-                            .draggable(false));
+                            .draggable(false));*/
                     String restroomKey = restroomsDatabaseRef.push().getKey();
                     Restroom restroom = new Restroom(restroomKey, newLocationName, userLatitude, userLongitude, 0);
                     restroomsDatabaseRef.child(restroomKey).setValue(restroom);
                     restroomsGeoFire.setLocation(restroomKey, new GeoLocation(userLatitude,userLongitude));
-                    marker.setTag(restroom);
-                    markers.put(restroomKey, marker);
+                    ClusterMarkerLocation marker = new ClusterMarkerLocation(userLatitude, userLongitude, restroom);
+                    //marker.setTag(restroom);
+                    restroomLocationMarkers.put(restroomKey, marker);
+                    //clusterManager.addItem(marker);
                 }
                 d.dismiss();
             }
@@ -320,6 +346,18 @@ public class MainActivity extends AppCompatActivity implements
         gMap.addMarker(new MarkerOptions().position(latLng));
         gMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
         gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, INITIAL_ZOOM_LEVEL));
+
+        clusterManager = new ClusterManager<>(this, gMap);
+        clusterManager.setOnClusterItemClickListener(new ClusterManager.OnClusterItemClickListener() {
+            @Override
+            public boolean onClusterItemClick(ClusterItem clusterItem) {
+                restroomSelected = ((ClusterMarkerLocation)clusterItem).getRestroom();
+                return false;
+            }
+        });
+        clusterManager.setRenderer(new MarkerRendering(this, gMap, clusterManager));
+
+        gMap.setOnMarkerClickListener(clusterManager);
         gMap.setOnCameraIdleListener(new GoogleMap.OnCameraIdleListener() {
             @Override
             public void onCameraIdle() {
@@ -331,17 +369,10 @@ public class MainActivity extends AppCompatActivity implements
                     // radius in km
                     geoQuery.setRadius(radius / 1000);
                 }
+                clusterManager.cluster();
+
             }
         });
-        gMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker marker) {
-                restroomSelected = (Restroom)marker.getTag();
-                return false;
-            }
-        });
-
-
         checkPermissions();
         try{
             gMap.setMyLocationEnabled(true);
@@ -358,22 +389,33 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void setValueEventListener() {
-        ValueEventListener dbListener = new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                // Get Post object and use the values to update the UI
-                //Person post = dataSnapshot.getValue(Post.class);
-                // ...
-            }
+        usersDatabaseRef.child(user.getUid()).child("restroomVisits").addChildEventListener(
+                new ChildEventListener() {
+                    @Override
+                    public void onChildAdded(DataSnapshot dataSnapshot, String s) {
+                        RestroomVisit restroomVisit = dataSnapshot.getValue(RestroomVisit.class);
+                        Restroom restroom = restroomVisit.getRestroom();
+                        if (restroom != null) {
+                            ClusterMarkerLocation marker = new ClusterMarkerLocation(restroom.getLatitude(),
+                                    restroom.getLongitude(), restroom, restroomVisit);
+                            restroomPersonalMarkers.put(dataSnapshot.getKey(), marker);
+                        }
+                    }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                // Getting Post failed, log a message
-                Log.w("ERROR", "loadPost:onCancelled", databaseError.toException());
-                // ...
-            }
-        };
-        usersDatabaseRef.addValueEventListener(dbListener);
+                    @Override
+                    public void onChildChanged(DataSnapshot dataSnapshot, String s) {
+                    }
+                    @Override
+                    public void onChildRemoved(DataSnapshot dataSnapshot) {
+                    }
+                    @Override
+                    public void onChildMoved(DataSnapshot dataSnapshot, String s) {
+                    }
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                    }
+                }
+        );
     }
 
     /**
@@ -392,7 +434,8 @@ public class MainActivity extends AppCompatActivity implements
     protected void onStart() {
         super.onStart();
         mGoogleApiClient.connect();
-        geoQuery.addGeoQueryEventListener(this);
+        if(!showPersonalHistory)
+            geoQuery.addGeoQueryEventListener(this);
     }
 
     @Override
@@ -410,10 +453,6 @@ public class MainActivity extends AppCompatActivity implements
      */
     @Override
     public void onConnected(Bundle connectionHint) {
-        // Provides a simple way of getting a device's location and is well suited for
-        // applications that do not require a fine-grained location and that do not need location
-        // updates. Gets the best and most recent location currently available, which may be null
-        // in rare cases when a location is not available.
         getCurrentLocation();
     }
 
@@ -424,7 +463,6 @@ public class MainActivity extends AppCompatActivity implements
         Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + result.getErrorCode());
     }
 
-
     @Override
     public void onConnectionSuspended(int cause) {
         // The connection to Google Play services was lost for some reason. We call connect() to
@@ -432,6 +470,7 @@ public class MainActivity extends AppCompatActivity implements
         Log.i(TAG, "Connection suspended");
         mGoogleApiClient.connect();
     }
+    //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
     //Getting current location
     private void getCurrentLocation() {
@@ -452,53 +491,21 @@ public class MainActivity extends AppCompatActivity implements
 
     //Function to move the map
     private void moveMap() {
-        //String to display current latitude and longitude
-        String msg = userLatitude + ", " + userLongitude;
-
         //Creating a LatLng Object to store Coordinates
         LatLng latLng = new LatLng(userLatitude, userLongitude);
-
-       /* //Adding marker to map
-        gMap.addMarker(new MarkerOptions()
-                .position(latLng) //setting position
-                .draggable(true) //Making the marker draggable
-                .title("Current Location")); //Adding a title*/
 
         //Moving the camera
         gMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
 
         //Animating the camera
         gMap.animateCamera(CameraUpdateFactory.zoomTo(15));
-
-        //Displaying current coordinates in toast
-        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
     }
 
-    public void populatePersonalMap(){
-        usersDatabaseRef.child(user.getUid()).child("restroomVisits")
-                .addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM/dd/yy hh:mm", Locale.US);
-                for (DataSnapshot restroomVisitSnapshot: dataSnapshot.getChildren()){
-                    RestroomVisit restroomVisit = restroomVisitSnapshot.getValue(RestroomVisit.class);
-                    Restroom restroom = restroomVisit.getRestroom();
-                    // Add a new marker to the map, labeled with restroom name, not draggable
-                    Marker marker = gMap.addMarker(new MarkerOptions()
-                            .position(new LatLng(restroom.getLatitude(), restroom.getLongitude()))
-                            .title(restroom.getName())
-                            .snippet(simpleDateFormat.format(restroomVisit.getTimeMilli()))
-                            .draggable(false));
-                    marker.setTag(restroom);
-                    markers.put(restroomVisitSnapshot.getKey(),marker);
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-
-            }
-        });
+    public void populatePersonalMap() {
+        for (ClusterMarkerLocation marker : restroomPersonalMarkers.values()){
+            clusterManager.addItem(marker);
+        }
+        clusterManager.cluster();
     }
 
     /******* GeoQuery ********/
@@ -513,12 +520,20 @@ public class MainActivity extends AppCompatActivity implements
                 Restroom restroom = dataSnapshot.getValue(Restroom.class);
 
                 // Add a new marker to the map, labeled with restroom name, not draggable
-                Marker marker = gMap.addMarker(new MarkerOptions()
+                /*Marker marker = gMap.addMarker(new MarkerOptions()
                         .position(new LatLng(location.latitude, location.longitude))
                         .title(restroom.getName())
                         .draggable(false));
                 marker.setTag(restroom);
-                markers.put(key, marker);
+                markers.put(key, marker);*/
+                if(restroom != null) {
+                    ClusterMarkerLocation marker = new ClusterMarkerLocation(restroom.getLatitude(),
+                            restroom.getLongitude(), restroom);
+                    if (!showPersonalHistory)
+                        clusterManager.addItem(marker);
+                    restroomLocationMarkers.put(key, marker);
+                    clusterManager.cluster();
+                }
             }
 
             @Override
@@ -532,20 +547,27 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void onKeyExited(String key) {
         // Remove any old marker
-        Marker marker = markers.get(key);
+        /*Marker marker = markers.get(key);
         if (marker != null) {
             marker.remove();
             markers.remove(key);
+        }*/
+        ClusterMarkerLocation marker = restroomLocationMarkers.get(key);
+        if (marker != null){
+            clusterManager.removeItem(marker);
+            restroomLocationMarkers.remove(key);
         }
+
     }
 
     @Override
     public void onKeyMoved(String key, GeoLocation location) {
         // Move the marker
-        Marker marker = markers.get(key);
+        /*Marker marker = markers.get(key);
         if (marker != null) {
             animateMarkerTo(marker, location.latitude, location.longitude);
-        }
+        }*/
+
     }
 
     @Override
@@ -594,7 +616,38 @@ public class MainActivity extends AppCompatActivity implements
 
     public void removeMarkers(){
         gMap.clear();
-        markers.clear();
+        restroomLocationMarkers.clear();
+        clusterManager.clearItems();
+    }
+
+    public void showFacebookFriends(){
+        FacebookSdk.sdkInitialize(this);
+        new GraphRequest(
+                AccessToken.getCurrentAccessToken(),
+                "/me/friends",
+                null,
+                HttpMethod.GET,
+                new GraphRequest.Callback() {
+                    public void onCompleted(GraphResponse response) {
+                    /* handle the result */
+                        Log.d("facebook friends:" ,response.toString());
+                        Log.d("facebook id:", mFirebaseUser.getUid());
+
+                        try {
+                            JSONObject json = response.getJSONObject();
+                            JSONArray jArray = json.getJSONArray("data");
+                            for (int i = 0; i < jArray.length(); i++){
+                                JSONObject friend = jArray.getJSONObject(i);
+                                Log.d("facebook parse id: ",friend.getString("id"));
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
+
+                    }
+                }
+        ).executeAsync();
     }
 
 

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Dropping Matters</string>
+    <string name="app_name">Bathroom Buddies</string>
     <string name="password_hint">Password</string>
     <string name="email_hint">Email</string>
     <string name="sign_up_button_label">Sign Up</string>
@@ -21,4 +21,5 @@
     <string name="record_restroom_visit">Record restroom visit</string>
     <string name="show_personal_history">Show person history</string>
     <string name="sign_out">Sign out</string>
+    <string name="battle">Battle</string>
 </resources>

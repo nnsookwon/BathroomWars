@@ -11,6 +11,10 @@
         android:id="@+id/button_sign_out"
         android:title="@string/sign_out"/>
 
+    <item
+        android:id="@+id/button_battle"
+        android:title="@string/battle"/>
+
 
 
 </menu>

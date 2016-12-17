@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="io.nnsookwon.bathroom_buddies">
+    package="io.nnsookwon.bathroom_wars">
 
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -22,7 +22,7 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name="io.nnsookwon.bathroom_buddies.MainActivity"
+            android:name="io.nnsookwon.bathroom_wars.MainActivity"
             android:screenOrientation="nosensor">
 
             <intent-filter>
@@ -32,7 +32,7 @@
         </activity>
 
         <activity
-            android:name="io.nnsookwon.bathroom_buddies.SignInActivity"
+            android:name="io.nnsookwon.bathroom_wars.SignInActivity"
             android:screenOrientation="nosensor">
 
             <intent-filter>

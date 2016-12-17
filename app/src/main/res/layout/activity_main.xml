@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     style="@style/AppScreen"
-    tools:context="io.nnsookwon.bathroom_buddies.MainActivity">
+    tools:context="io.nnsookwon.bathroom_wars.MainActivity">
 
 
     <Button
@@ -23,11 +23,39 @@
         android:onClick="recordRestroomVisit"/>
 
 
-    <!-- This can go anywhere in your layout (see other demos for some examples). -->
-    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
-        android:id="@+id/map"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        class="com.google.android.gms.maps.SupportMapFragment" />
+           <!-- This can go anywhere in your layout (see other demos for some examples). -->
+        <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+            android:id="@+id/map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            class="com.google.android.gms.maps.SupportMapFragment" >
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/buttons_battle_map"
+            android:orientation="vertical"
+            android:visibility="invisible">
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/button_personal_territory"
+                android:background="@android:color/holo_blue_light"
+                android:padding="8dp"
+                android:alpha="0.75"
+                android:onClick="togglePersonalTerritory"/>
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/button_friend_territory"
+                android:background="@android:color/holo_red_light"
+                android:padding="8dp"
+                android:alpha="0.75"
+                android:onClick="toggleFriendTerritory"/>
+        </LinearLayout>
+    </fragment>
+
+
 
 </LinearLayout>

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Bathroom Buddies</string>
+    <string name="app_name">Bathroom Wars</string>
     <string name="password_hint">Password</string>
     <string name="email_hint">Email</string>
     <string name="sign_up_button_label">Sign Up</string>
@@ -22,4 +22,7 @@
     <string name="show_personal_history">Show person history</string>
     <string name="sign_out">Sign out</string>
     <string name="battle">Battle</string>
+    <string name="button_personal_territory">Personal territory</string>
+    <string name="button_friend_territoy">Friend territory</string>
+    <string name="button_friend_territory">Friend territory</string>
 </resources>

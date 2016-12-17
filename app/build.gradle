@@ -5,7 +5,7 @@ android {
     buildToolsVersion "23.0.3"
 
     defaultConfig {
-        applicationId "io.nnsookwon.bathroom_buddies"
+        applicationId "io.nnsookwon.bathroom_wars"
         minSdkVersion 23
         targetSdkVersion 23
         versionCode 1

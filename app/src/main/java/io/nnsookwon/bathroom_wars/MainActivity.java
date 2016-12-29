@@ -5,6 +5,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -142,7 +143,8 @@ public class MainActivity extends AppCompatActivity implements
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(map);
         mapFragment.getMapAsync(this);
         geoQuery = restroomsGeoFire.queryAtLocation(new GeoLocation(userLatitude, userLongitude),INITIAL_ZOOM_LEVEL);
-        checkPermissions();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            checkPermissions();
         buildGoogleApiClient();
     }
 
@@ -390,7 +392,8 @@ public class MainActivity extends AppCompatActivity implements
 
             }
         });
-        checkPermissions();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            checkPermissions();
         try{
             gMap.setMyLocationEnabled(true);
             gMap.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
@@ -726,6 +729,7 @@ public class MainActivity extends AppCompatActivity implements
     public void populateBattleMap(final String friendFacebookId, final String friendName){
         String friendUid = "";
         Log.d("facebook friend id", friendFacebookId);
+        additionalMarkers.clear();
 
         usersDatabaseRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override

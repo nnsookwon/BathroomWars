@@ -5,7 +5,7 @@ package io.nnsookwon.bathroom_wars;
  */
 
 public class RestroomVisit {
-
+    private String key;
     private Restroom restroom;
     private long timeMilli;
 
@@ -13,11 +13,15 @@ public class RestroomVisit {
 
     }
 
-    public RestroomVisit(Restroom mRestroom, long mTimeMilli){
+    public RestroomVisit(String mKey, Restroom mRestroom, long mTimeMilli){
+        key = mKey;
         restroom = mRestroom;
         timeMilli = mTimeMilli;
     }
 
+    public void setKey(String mKey){
+        key = mKey;
+    }
     public void setRestroom(Restroom mRestroom){
         restroom = mRestroom;
     }
@@ -26,6 +30,9 @@ public class RestroomVisit {
         timeMilli = mTimeMilli;
     }
 
+    public String getKey(){
+        return key;
+    }
     public Restroom getRestroom(){
         return restroom;
     }
@@ -33,5 +40,6 @@ public class RestroomVisit {
     public long getTimeMilli(){
         return timeMilli;
     }
+
 
 }

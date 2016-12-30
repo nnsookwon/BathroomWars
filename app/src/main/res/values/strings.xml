@@ -19,10 +19,14 @@
     <string name="sign_in">Sign in:</string>
     <string name="create_new_restroom_location">Create new restroom location</string>
     <string name="record_restroom_visit">Record restroom visit</string>
-    <string name="show_personal_history">Show person history</string>
+    <string name="show_personal_history">Show personal history</string>
     <string name="sign_out">Sign out</string>
     <string name="battle">Battle</string>
     <string name="button_personal_territory">Personal territory</string>
     <string name="button_friend_territoy">Friend territory</string>
     <string name="button_friend_territory">Friend territory</string>
+    <string name="show_locations">Show locations</string>
+    <string name="add_to_public_database">Add to public database</string>
+    <string name="location_name">Location name</string>
+    <string name="make_public">Make public</string>
 </resources>

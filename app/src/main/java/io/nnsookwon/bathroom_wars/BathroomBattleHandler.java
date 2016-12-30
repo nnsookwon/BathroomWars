@@ -55,10 +55,12 @@ public class BathroomBattleHandler {
                 .title("hello"));
     }
 
-    public void addMarker(String key, LatLng position){
+    public void addMarker(String key, Restroom restroom){
+        LatLng position= new LatLng(restroom.getLatitude(), restroom.getLongitude());
         Marker marker = gMap.addMarker(new MarkerOptions()
                 .position(position)
-                .title(userDisplayName));
+                .title(userDisplayName)
+                .snippet(restroom.getName()));
         markers.put(key, marker);
 
         Circle territoryCircle = gMap.addCircle(new CircleOptions()

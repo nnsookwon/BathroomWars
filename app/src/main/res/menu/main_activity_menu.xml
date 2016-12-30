@@ -2,18 +2,20 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/button_show_personal_history"
-        android:title="@string/show_personal_history"
-        android:checkable="true"
-        android:checked="false"/>
+        android:id="@+id/button_show_locations"
+        android:title="@string/show_locations"/>
 
     <item
-        android:id="@+id/button_sign_out"
-        android:title="@string/sign_out"/>
+        android:id="@+id/button_show_personal_history"
+        android:title="@string/show_personal_history"/>
 
     <item
         android:id="@+id/button_battle"
         android:title="@string/battle"/>
+
+    <item
+        android:id="@+id/button_sign_out"
+        android:title="@string/sign_out"/>
 
 
 

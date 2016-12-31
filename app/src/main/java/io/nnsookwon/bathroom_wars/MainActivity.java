@@ -21,7 +21,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -62,6 +61,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -114,7 +114,7 @@ public class MainActivity extends AppCompatActivity implements
     private GeoQuery geoQuery;
 
     private Map<String, Marker> markers;
-    private ArrayAdapter<FacebookFriend> friendsListAdapter;
+    private ArrayList<FacebookFriend> friendsList;
 
     private double userLongitude;
     private double userLatitude;
@@ -138,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements
         initFirebase();
 
         markers = new HashMap<>();
-        friendsListAdapter = new ArrayAdapter<FacebookFriend>(this, android.R.layout.select_dialog_singlechoice);
+        friendsList = new ArrayList<>();
         personalHandler = null;
         friendHandler = null;
         userLatitude = 0;
@@ -150,7 +150,7 @@ public class MainActivity extends AppCompatActivity implements
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             checkPermissions();
         buildGoogleApiClient();
-        scheduleReminderNotification();
+
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -459,6 +459,7 @@ public class MainActivity extends AppCompatActivity implements
             geoQuery.addGeoQueryEventListener(this);
             setGeneralMapButtonsVisibility(true);
         }
+        scheduleReminderNotification();
         Log.d("State monitor", "onStart " + state);
     }
 
@@ -706,11 +707,16 @@ public class MainActivity extends AppCompatActivity implements
                         try {
                             JSONObject json = response.getJSONObject();
                             JSONArray jArray = json.getJSONArray("data");
-                            for (int i = 0; i < jArray.length(); i++){
+                            Log.d("Facebook Json:", jArray.toString());
+                            for (int i = jArray.length()-1; i >= 0; i--){
                                 JSONObject jsonFriend = jArray.getJSONObject(i);
                                 FacebookFriend friend =
-                                        new FacebookFriend(jsonFriend.getString("id"), jsonFriend.getString("name"));
-                                friendsListAdapter.add(friend);
+                                        new FacebookFriend(jsonFriend.getString("id"),
+                                                jsonFriend.getString("name"),
+                                                null);
+                                friend.setPhotoUrl("https://graph.facebook.com/" +
+                                        friend.getId() + "/picture?type=normal");
+                                friendsList.add(friend);
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -723,30 +729,34 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void showFriendsListDialog(){
-        AlertDialog.Builder builderSingle = new AlertDialog.Builder(this);
-        builderSingle.setTitle("Choose a friend");
+        final android.app.FragmentManager fragmentManager = getFragmentManager();
+        final FriendsListDialogFragment dialogFragment = new FriendsListDialogFragment();
 
-        builderSingle.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+        Log.d("Friends list", friendsList.toString());
+        dialogFragment.show(fragmentManager, "FRIENDS_LIST_DIALOG");
+        fragmentManager.executePendingTransactions();
+        dialogFragment.setFriendsList(friendsList);
+        dialogFragment.adapter.setItemListener(new MyRecyclerAdapter.RecyclerViewClickListener() {
             @Override
-            public void onClick(DialogInterface dialog, int which) {
-                setMapState(GENERAL_MAP);
-                dialog.dismiss();
-            }
-        });
-
-        builderSingle.setAdapter(friendsListAdapter, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String friendFacebookId = friendsListAdapter.getItem(which).getId();
-                String friendName = friendsListAdapter.getItem(which).getUserName();
+            public void recyclerViewListClicked(View v, int position) {
+                Log.d("RecyclerView click", position + " " + friendsList.get(position).getUserName());
+                populateBattleMap(friendsList.get(position));
                 setMapState(BATTLE_MAP);
-                populateBattleMap(friendFacebookId, friendName);
+                dialogFragment.getDialog().dismiss();
             }
         });
-        builderSingle.show();
+        dialogFragment.setDialogListener(new FriendsListDialogFragment.DialogListener() {
+            @Override
+            public void dialogCancelled() {
+                setMapState(GENERAL_MAP);
+            }
+        });
+
     }
 
-    public void populateBattleMap(final String friendFacebookId, final String friendName){
+    public void populateBattleMap(final FacebookFriend friend) {
+        final String friendFacebookId = friend.getId();
+        final String friendName = friend.getUserName();
         String friendUid = "";
         Log.d("facebook friend id", friendFacebookId);
         personalHandler =

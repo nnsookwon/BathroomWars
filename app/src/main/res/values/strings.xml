@@ -30,4 +30,5 @@
     <string name="location_name">Location name</string>
     <string name="make_public">Make public</string>
     <string name="reminder">Don\'t fall behind! Keep conquering territory!</string>
+    <string name="name">Name</string>
 </resources>

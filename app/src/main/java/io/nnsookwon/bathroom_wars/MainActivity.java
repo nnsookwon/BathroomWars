@@ -58,8 +58,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.google.android.gms.common.api.GoogleApiClient.Builder;
@@ -117,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements
 
     private int state;
 
-    private BathroomBattleHandler personHandler;
+    private BathroomBattleHandler personalHandler;
     private BathroomBattleHandler friendHandler;
 
     private boolean facebookSDKInitilized;
@@ -133,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements
 
         markers = new HashMap<>();
         friendsListAdapter = new ArrayAdapter<FacebookFriend>(this, android.R.layout.select_dialog_singlechoice);
-        personHandler = null;
+        personalHandler = null;
         friendHandler = null;
         userLatitude = 0;
         userLongitude = 0;
@@ -154,20 +156,16 @@ public class MainActivity extends AppCompatActivity implements
     public boolean onOptionsItemSelected(MenuItem item) {
         super.onOptionsItemSelected(item);
         if (state != BATTLE_MAP) {
-            personHandler = null;
+            personalHandler = null;
             friendHandler = null;
         }
         removeMarkers();
-        geoQuery.removeAllListeners();
-        setBattleMapButtonsVisibility(false);
         switch (item.getItemId()) {
             case R.id.button_show_locations:
-                state = GENERAL_MAP;
-                geoQuery.addGeoQueryEventListener(this);
+                setMapState(GENERAL_MAP);
                 break;
             case R.id.button_show_personal_history:
-                state = PERSONAL_MAP;
-                populatePersonalMap();
+                setMapState(PERSONAL_MAP);
                 break;
             case R.id.button_battle:
                 showFriendsListDialog();
@@ -357,6 +355,7 @@ public class MainActivity extends AppCompatActivity implements
     public void onMapReady(GoogleMap googleMap) {
         LatLng latLng = new LatLng(-33.852, 151.211);
         gMap = googleMap;
+        gMap.getUiSettings().setMapToolbarEnabled(false); //hide navigation toolbar
         gMap.addMarker(new MarkerOptions().position(latLng));
         gMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
         gMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, INITIAL_ZOOM_LEVEL));
@@ -450,8 +449,10 @@ public class MainActivity extends AppCompatActivity implements
     protected void onStart() {
         super.onStart();
         mGoogleApiClient.connect();
-        if (state == GENERAL_MAP)
+        if (state == GENERAL_MAP) {
             geoQuery.addGeoQueryEventListener(this);
+            setGeneralMapButtonsVisibility(true);
+        }
         Log.d("State monitor", "onStart " + state);
     }
 
@@ -534,16 +535,20 @@ public class MainActivity extends AppCompatActivity implements
                 new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
+                        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM/dd/yy HH:mm", Locale.US);
                         for (DataSnapshot restroomVisitSnapshot : dataSnapshot.getChildren()) {
                             RestroomVisit restroomVisit = restroomVisitSnapshot.getValue(RestroomVisit.class);
-                            Restroom restroom = restroomVisit.getRestroom();
-                            if (restroom != null) {
-                                Marker marker = gMap.addMarker(new MarkerOptions()
-                                        .position(new LatLng(restroom.getLatitude(), restroom.getLongitude()))
-                                        .title(restroom.getName())
-                                        .draggable(false));
-                                marker.setTag(restroomVisit);
-                                markers.put(restroomVisitSnapshot.getKey(), marker);
+                            if (restroomVisit != null) {
+                                Restroom restroom = restroomVisit.getRestroom();
+                                if (restroom != null) {
+                                    Marker marker = gMap.addMarker(new MarkerOptions()
+                                            .position(new LatLng(restroom.getLatitude(), restroom.getLongitude()))
+                                            .title(restroom.getName())
+                                            .snippet(simpleDateFormat.format(restroomVisit.getTimeMilli()))
+                                            .draggable(false));
+                                    marker.setTag(restroomVisit);
+                                    markers.put(restroomVisitSnapshot.getKey(), marker);
+                                }
                             }
                         }
                     }
@@ -719,9 +724,8 @@ public class MainActivity extends AppCompatActivity implements
         builderSingle.setNegativeButton("cancel", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                geoQuery.addGeoQueryEventListener(MainActivity.this);
+                setMapState(GENERAL_MAP);
                 dialog.dismiss();
-                setBattleMapButtonsVisibility(false);
             }
         });
 
@@ -730,9 +734,8 @@ public class MainActivity extends AppCompatActivity implements
             public void onClick(DialogInterface dialog, int which) {
                 String friendFacebookId = friendsListAdapter.getItem(which).getId();
                 String friendName = friendsListAdapter.getItem(which).getUserName();
-                state = BATTLE_MAP;
+                setMapState(BATTLE_MAP);
                 populateBattleMap(friendFacebookId, friendName);
-                setBattleMapButtonsVisibility(true);
             }
         });
         builderSingle.show();
@@ -741,7 +744,7 @@ public class MainActivity extends AppCompatActivity implements
     public void populateBattleMap(final String friendFacebookId, final String friendName){
         String friendUid = "";
         Log.d("facebook friend id", friendFacebookId);
-        personHandler =
+        personalHandler =
                 new BathroomBattleHandler(gMap, user.getUserName(), "1768ea");
         friendHandler =
                 new BathroomBattleHandler(gMap, friendName, "c910b3");
@@ -753,9 +756,11 @@ public class MainActivity extends AppCompatActivity implements
                 DataSnapshot userRestroomVisitsSnapshot = dataSnapshot.child(user.getUid()).child("restroomVisits");
                 for (DataSnapshot restroomVisitSnapshot : userRestroomVisitsSnapshot.getChildren()) {
                     RestroomVisit restroomVisit = restroomVisitSnapshot.getValue(RestroomVisit.class);
-                    Restroom restroom = restroomVisit.getRestroom();
-                    if (restroom != null) {
-                       personHandler.addMarker(restroomVisitSnapshot.getKey(), restroom);
+                    if (restroomVisit != null) {
+                        Restroom restroom = restroomVisit.getRestroom();
+                        if (restroom != null) {
+                            personalHandler.addMarker(restroomVisitSnapshot.getKey(), restroom);
+                        }
                     }
                 }
 
@@ -764,23 +769,13 @@ public class MainActivity extends AppCompatActivity implements
                     if (friendFacebookId.equals(userSnapshot.child("facebookId").getValue())){
                         for (DataSnapshot restroomVisitSnapshot : userSnapshot.child("restroomVisits").getChildren()) {
                             RestroomVisit restroomVisit = restroomVisitSnapshot.getValue(RestroomVisit.class);
-                            Restroom restroom = restroomVisit.getRestroom();
-                            if (restroom != null) {
-                                /*
-                                Marker marker = gMap.addMarker(new MarkerOptions()
-                                        .position(new LatLng(restroom.getLatitude(), restroom.getLongitude()))
-                                        .title(friendName)
-                                        .snippet(restroom.getName())
-                                        .draggable(false));
-                                marker.setTag(restroom);
-                                additionalMarkers.put(restroomVisitSnapshot.getKey(), marker);*/
-                                friendHandler.addMarker(restroomVisitSnapshot.getKey(), restroom);
+                            if (restroomVisit != null) {
+                                Restroom restroom = restroomVisit.getRestroom();
+                                if (restroom != null) {
+                                    friendHandler.addMarker(restroomVisitSnapshot.getKey(), restroom);
+                                }
                             }
                         }
-                       /*
-                        for(Map.Entry<String, Marker> entry: additionalMarkers.entrySet()){
-                            friendHandler.addMarker(entry.getKey(), entry.getValue().getPosition());
-                        }*/
                         break;
                     }
                 }
@@ -793,6 +788,15 @@ public class MainActivity extends AppCompatActivity implements
         });
     }
 
+
+    public void setGeneralMapButtonsVisibility(boolean visible){
+        LinearLayout linearLayout = (LinearLayout)findViewById(R.id.buttons_general_map);
+        if (visible)
+            linearLayout.setVisibility(View.VISIBLE);
+        else
+            linearLayout.setVisibility(View.GONE);
+    }
+
     public void setBattleMapButtonsVisibility(boolean visible){
         LinearLayout linearLayout = (LinearLayout)findViewById(R.id.buttons_battle_map);
         if (visible)
@@ -802,11 +806,45 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void togglePersonalTerritory(View v){
-        personHandler.toggleVisibility();
+        if (personalHandler != null) {
+            personalHandler.toggleVisibility();
+            if (personalHandler.isShowing())
+                v.setAlpha(1);
+            else
+                v.setAlpha(0.5f);
+        }
     }
 
     public void toggleFriendTerritory(View v){
-        friendHandler.toggleVisibility();
+        if (friendHandler != null) {
+            friendHandler.toggleVisibility();
+            if (friendHandler.isShowing())
+                v.setAlpha(0.9f);
+            else
+                v.setAlpha(0.7f);
+        }
+    }
+
+    public void setMapState(int mapState){
+        geoQuery.removeAllListeners();
+        setGeneralMapButtonsVisibility(false);
+        setBattleMapButtonsVisibility(false);
+
+        switch (mapState) {
+            case GENERAL_MAP:
+                state = GENERAL_MAP;
+                setGeneralMapButtonsVisibility(true);
+                geoQuery.addGeoQueryEventListener(this);
+                break;
+            case PERSONAL_MAP:
+                state = PERSONAL_MAP;
+                populatePersonalMap();
+                break;
+            case BATTLE_MAP:
+                state = BATTLE_MAP;
+                setBattleMapButtonsVisibility(true);
+                break;
+        }
     }
 
 

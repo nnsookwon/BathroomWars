@@ -29,4 +29,5 @@
     <string name="add_to_public_database">Add to public database</string>
     <string name="location_name">Location name</string>
     <string name="make_public">Make public</string>
+    <string name="reminder">Don\'t fall behind! Keep conquering territory!</string>
 </resources>

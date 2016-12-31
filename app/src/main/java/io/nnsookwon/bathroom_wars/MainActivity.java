@@ -1,6 +1,8 @@
 package io.nnsookwon.bathroom_wars;
 
 import android.Manifest.permission;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -61,6 +63,7 @@ import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -147,6 +150,7 @@ public class MainActivity extends AppCompatActivity implements
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             checkPermissions();
         buildGoogleApiClient();
+        scheduleReminderNotification();
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -849,6 +853,17 @@ public class MainActivity extends AppCompatActivity implements
                 setBattleMapButtonsVisibility(true);
                 break;
         }
+    }
+
+    public void scheduleReminderNotification() {
+        Intent alertIntent = new Intent(this, AlertReceiver.class);
+        AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, alertIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP,
+                new GregorianCalendar().getTimeInMillis() + AlarmManager.INTERVAL_DAY*7,
+                AlarmManager.INTERVAL_DAY*7, pendingIntent);
+        //set reminder alarm to notify once a week
     }
 
 

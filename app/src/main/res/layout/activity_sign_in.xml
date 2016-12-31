@@ -15,14 +15,24 @@
         android:layout_marginTop="40dp"
         android:text="@string/sign_in"/>
 
+    <ProgressBar
+        android:id="@+id/progress_spinner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:layout_above="@+id/ll_sign_in_button"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="36dp"
+        android:visibility="gone"/>
+
     <LinearLayout
+        android:id="@id/ll_sign_in_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="visible"
         android:layout_gravity="center"
         android:orientation="vertical"
-        android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true">
+        android:layout_centerInParent="true">
 
 
         <com.google.android.gms.common.SignInButton
@@ -30,7 +40,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="16dp"
-            android:visibility="invisible"/>
+            android:visibility="gone"/>
 
         <com.facebook.login.widget.LoginButton
             android:id="@+id/button_facebook_sign_in"

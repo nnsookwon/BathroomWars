@@ -6,6 +6,7 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.facebook.AccessToken;
@@ -40,14 +41,15 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
 
     private static final String TAG = "SignInActivity";
     private static final int RC_SIGN_IN = 9001;
-    private SignInButton mGoogleSignInButton;
+    private SignInButton googleSignInButton;
+    private ProgressBar progressSpinner;
 
     private GoogleApiClient mGoogleApiClient;
     private FirebaseAuth mFirebaseAuth;
 
     /* Facebook login */
     private CallbackManager mCallbackManager;
-    private LoginButton mFacebookSignInButton;
+    private LoginButton facebookSignInButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,8 +59,9 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
 
 
         // Assign fields
-        mGoogleSignInButton = (SignInButton) findViewById(R.id.button_google_sign_in);
-        mFacebookSignInButton = (LoginButton) findViewById(R.id.button_facebook_sign_in);
+        googleSignInButton = (SignInButton) findViewById(R.id.button_google_sign_in);
+        facebookSignInButton = (LoginButton) findViewById(R.id.button_facebook_sign_in);
+        progressSpinner = (ProgressBar)findViewById(R.id.progress_spinner);
 
         initGoogleLogin();
         initFacebookLogin();
@@ -71,7 +74,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
 
     private void initGoogleLogin() {
         // Set click listeners
-        mGoogleSignInButton.setOnClickListener(this);
+        googleSignInButton.setOnClickListener(this);
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
@@ -119,7 +122,8 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
     private void handleFacebookAccessToken(AccessToken token) {
         Log.d(TAG, "handleFacebookAccessToken:" + token);
 
-        mFacebookSignInButton.setVisibility(View.INVISIBLE);
+        progressSpinner.setVisibility(View.VISIBLE);
+        facebookSignInButton.setVisibility(View.INVISIBLE);
 
         AuthCredential credential = FacebookAuthProvider.getCredential(token.getToken());
         mFirebaseAuth.signInWithCredential(credential)
@@ -127,7 +131,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         Log.d(TAG, "signInWithCredential:onComplete:" + task.isSuccessful());
-
+                        progressSpinner.setVisibility(View.GONE);
                         // If sign in fails, display a message to the user. If sign in succeeds
                         // the auth state listener will be notified and logic to handle the
                         // signed in user can be handled in the listener.
@@ -135,6 +139,7 @@ public class SignInActivity extends AppCompatActivity implements GoogleApiClient
                             Log.w(TAG, "signInWithCredential", task.getException());
                             Toast.makeText(SignInActivity.this, "Authentication failed.",
                                     Toast.LENGTH_SHORT).show();
+                            facebookSignInButton.setVisibility(View.VISIBLE);
                         } else {
                             startActivity(new Intent(SignInActivity.this, MainActivity.class));
                             finish();

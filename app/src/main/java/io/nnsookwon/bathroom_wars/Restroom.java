@@ -66,4 +66,9 @@ public class Restroom {
         visits++;
     }
 
+
+    public boolean equals(Restroom restroom) {
+        return key.equals(restroom.getKey());
+    }
+
 }

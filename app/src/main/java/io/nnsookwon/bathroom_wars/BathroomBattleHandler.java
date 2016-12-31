@@ -19,7 +19,7 @@ import java.util.Map;
 public class BathroomBattleHandler {
 
     public static final int RADIUS = 500;
-    public static final int TRANSPARENCY = 40;
+    public static final int TRANSPARENCY = 40; //% transparency of circle fill
 
     private GoogleMap gMap;
     private String userDisplayName;
@@ -49,24 +49,26 @@ public class BathroomBattleHandler {
         return isShowing;
     }
 
-    public void init() {
-        gMap.addMarker(new MarkerOptions()
-                .position(gMap.getCameraPosition().target)
-                .title("hello"));
-    }
-
     public void addMarker(String key, Restroom restroom){
+        for (Marker marker: markers.values()){
+            Restroom mRestroom = (Restroom) marker.getTag();
+            if (mRestroom.equals(restroom)) {
+                break;
+            }
+            //prevent duplicate locations from being placed on map
+        }
         LatLng position= new LatLng(restroom.getLatitude(), restroom.getLongitude());
         Marker marker = gMap.addMarker(new MarkerOptions()
                 .position(position)
                 .title(userDisplayName)
                 .snippet(restroom.getName()));
+        marker.setTag(restroom);
         markers.put(key, marker);
 
         Circle territoryCircle = gMap.addCircle(new CircleOptions()
                             .center(position)
                             .radius(RADIUS)
-                            .fillColor(Color.argb(TRANSPARENCY, r, g, b))
+                            .fillColor(Color.argb((int)((100-TRANSPARENCY)/100.0*255), r, g, b))
                             .strokeWidth(0));
         circles.put(marker, territoryCircle);
 
@@ -93,6 +95,14 @@ public class BathroomBattleHandler {
         else
             hideTerritory();
         return isShowing;
+    }
+
+    public int getNumberOfBathrooms(){
+        return markers.size();
+    }
+
+    public String getUserDisplayName() {
+        return userDisplayName;
     }
 
 

@@ -797,6 +797,9 @@ public class MainActivity extends AppCompatActivity implements
                         break;
                     }
                 }
+
+                battleMapInitialMessage();
+
             }
 
                 @Override
@@ -804,6 +807,22 @@ public class MainActivity extends AppCompatActivity implements
 
                 }
         });
+
+    }
+
+    public void battleMapInitialMessage(){
+        if (personalHandler != null && friendHandler != null) {
+            StringBuilder builder = new StringBuilder();
+            builder.append("BATHROOMS CONQUERED:\n")
+                    .append(personalHandler.getUserDisplayName())
+                    .append(": ")
+                    .append(personalHandler.getNumberOfBathrooms())
+                    .append("\n")
+                    .append(friendHandler.getUserDisplayName())
+                    .append(": ")
+                    .append(friendHandler.getNumberOfBathrooms());
+            Toast.makeText(this, builder.toString(), Toast.LENGTH_LONG).show();
+        }
     }
 
 
@@ -817,8 +836,10 @@ public class MainActivity extends AppCompatActivity implements
 
     public void setBattleMapButtonsVisibility(boolean visible){
         LinearLayout linearLayout = (LinearLayout)findViewById(R.id.buttons_battle_map);
-        if (visible)
+        if (visible) {
             linearLayout.setVisibility(View.VISIBLE);
+
+        }
         else
             linearLayout.setVisibility(View.GONE);
     }
@@ -826,18 +847,31 @@ public class MainActivity extends AppCompatActivity implements
     public void togglePersonalTerritory(View v){
         if (personalHandler != null) {
             personalHandler.toggleVisibility();
-            if (personalHandler.isShowing())
+            if (personalHandler.isShowing()) {
                 v.setAlpha(1);
+                Toast.makeText(this,
+                        personalHandler.getUserDisplayName() + ":\n" +
+                        personalHandler.getNumberOfBathrooms() +
+                                " bathrooms conquered",
+                        Toast.LENGTH_LONG).show();
+            }
             else
                 v.setAlpha(0.5f);
+
         }
     }
 
     public void toggleFriendTerritory(View v){
         if (friendHandler != null) {
             friendHandler.toggleVisibility();
-            if (friendHandler.isShowing())
+            if (friendHandler.isShowing()) {
                 v.setAlpha(0.9f);
+                Toast.makeText(this,
+                        friendHandler.getUserDisplayName() + ":\n" +
+                        friendHandler.getNumberOfBathrooms() +
+                                " bathrooms conquered",
+                        Toast.LENGTH_LONG).show();
+            }
             else
                 v.setAlpha(0.7f);
         }

@@ -20,6 +20,7 @@ import android.view.View;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Interpolator;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -382,6 +383,7 @@ public class MainActivity extends AppCompatActivity implements
             }
         });
         gMap.setOnInfoWindowLongClickListener(new GoogleMap.OnInfoWindowLongClickListener() {
+            //delete personal restroom visits by long clicking on info window
             @Override
             public void onInfoWindowLongClick(final Marker marker) {
                 if (state == PERSONAL_MAP){
@@ -531,7 +533,7 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     public void populatePersonalMap() {
-        usersDatabaseRef.child(user.getUid()).child("restroomVisits").addListenerForSingleValueEvent(
+        usersDatabaseRef.child(user.getUid() + "/restroomVisits").addListenerForSingleValueEvent(
                 new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
@@ -560,7 +562,6 @@ public class MainActivity extends AppCompatActivity implements
     }
 
     /******* GeoQuery ********/
-
 
     @Override
     public void onKeyEntered(final String key, final GeoLocation location) {
@@ -678,7 +679,7 @@ public class MainActivity extends AppCompatActivity implements
                            JSONObject json = response.getJSONObject();
                            if (user.getFacebookId() == null) {
                                 user.setFacebookId(json.getString("id"));
-                                usersDatabaseRef.child(mFirebaseUser.getUid()).child("facebookId").
+                                usersDatabaseRef.child(mFirebaseUser.getUid() + "/facebookId").
                                         setValue(user.getFacebookId());
                            }
                         } catch (JSONException e) {
@@ -748,12 +749,15 @@ public class MainActivity extends AppCompatActivity implements
                 new BathroomBattleHandler(gMap, user.getUserName(), "1768ea");
         friendHandler =
                 new BathroomBattleHandler(gMap, friendName, "c910b3");
+        String friendFirstName = friendName.split("\\s")[0]; //split at whitespace
+        ((Button)findViewById(R.id.button_friend_territory))
+                .setText(friendFirstName + "'s " + getResources().getString(R.string.territory));
 
         usersDatabaseRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 //*******Populate personal battle map*******
-                DataSnapshot userRestroomVisitsSnapshot = dataSnapshot.child(user.getUid()).child("restroomVisits");
+                DataSnapshot userRestroomVisitsSnapshot = dataSnapshot.child(user.getUid() + "/restroomVisits");
                 for (DataSnapshot restroomVisitSnapshot : userRestroomVisitsSnapshot.getChildren()) {
                     RestroomVisit restroomVisit = restroomVisitSnapshot.getValue(RestroomVisit.class);
                     if (restroomVisit != null) {

@@ -21,18 +21,20 @@
             android:orientation="vertical"
             android:visibility="gone">
             <Button
+                android:id="@+id/button_personal_territory"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/button_personal_territory"
+                android:text="@string/personal_territory"
                 android:background="@android:color/holo_blue_light"
                 android:padding="8dp"
                 android:onClick="togglePersonalTerritory"
                 android:alpha="0.9"/>
 
             <Button
+                android:id="@+id/button_friend_territory"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/button_friend_territory"
+                android:text="@string/friend_territory"
                 android:background="@android:color/holo_red_light"
                 android:padding="8dp"
                 android:onClick="toggleFriendTerritory"

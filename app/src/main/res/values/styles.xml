@@ -9,7 +9,7 @@
     </style>
 
     <style name="AppScreen">
-        <item name="android:padding">16dp</item>
+        <item name="android:padding">8dp</item>
     </style>
 
 </resources>

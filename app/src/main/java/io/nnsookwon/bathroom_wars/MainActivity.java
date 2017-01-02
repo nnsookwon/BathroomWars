@@ -37,6 +37,10 @@ import com.firebase.geofire.GeoFire;
 import com.firebase.geofire.GeoLocation;
 import com.firebase.geofire.GeoQuery;
 import com.firebase.geofire.GeoQueryEventListener;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -63,7 +67,6 @@ import org.json.JSONObject;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -127,6 +130,7 @@ public class MainActivity extends AppCompatActivity implements
     private BathroomBattleHandler friendHandler;
 
     private boolean facebookSDKInitilized;
+    private AdView adView;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -150,6 +154,7 @@ public class MainActivity extends AppCompatActivity implements
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
             checkPermissions();
         buildGoogleApiClient();
+        initAds();
 
     }
 
@@ -473,17 +478,28 @@ public class MainActivity extends AppCompatActivity implements
         geoQuery.removeAllListeners();
         Log.d("State monitor", "onStop " + state);
     }
+    @Override
+    protected void onPause() {
+        if (adView != null) {
+            adView.pause();
+        }
+        super.onPause();
+    }
+
 
     protected void onResume(){
         super.onResume();
-        Log.d("State monitor", "onResume");
+        if (adView != null) {
+            adView.resume();
+        }
     }
-
-    protected void onPause(){
-        super.onPause();
-        Log.d("State monitor", "onPause");
+    @Override
+    protected void onDestroy() {
+        if (adView != null) {
+            adView.destroy();
+        }
+        super.onDestroy();
     }
-
     /**
      * Runs when a GoogleApiClient object successfully connects.
      */
@@ -904,10 +920,36 @@ public class MainActivity extends AppCompatActivity implements
         AlarmManager alarmManager = (AlarmManager)getSystemService(ALARM_SERVICE);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(this, 1, alertIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
-        alarmManager.setInexactRepeating(AlarmManager.RTC_WAKEUP,
-                new GregorianCalendar().getTimeInMillis() + AlarmManager.INTERVAL_DAY*7,
-                AlarmManager.INTERVAL_DAY*7, pendingIntent);
-        //set reminder alarm to notify once a week
+        alarmManager.setInexactRepeating(AlarmManager.RTC,
+                System.currentTimeMillis() + AlarmManager.INTERVAL_DAY*12,
+                AlarmManager.INTERVAL_DAY*12, pendingIntent);
+        //set motivation/reminder alarm
+    }
+
+    public void initAds() {
+        MobileAds.initialize(getApplicationContext(), getResources().getString(R.string.ad_mob_app_id));
+        adView = (AdView) findViewById(R.id.adView);
+        AdRequest adRequest = new AdRequest.Builder()
+                 .addTestDevice("70866E304DD6C756C42EAF5A20DB4BCC")
+                 .build();
+        adView.setAdListener(new AdListener() {
+            @Override
+            public void onAdFailedToLoad(int i) {
+                super.onAdFailedToLoad(i);
+                adView.setVisibility(View.GONE);
+                //hide banner if no ads available
+            }
+        });
+
+
+        adView.loadAd(adRequest);
+        //testing purposes
+        /*AdRequest adRequest = new AdRequest.Builder()
+                .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)        // All emulators
+                .addTestDevice("70866E304DD6C756C42EAF5A20DB4BCC")  // An example device ID
+                .build();
+        mAdView.loadAd(adRequest);
+        */
     }
 
 

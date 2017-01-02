@@ -31,7 +31,7 @@ public class AlertReceiver extends BroadcastReceiver {
                 .setContentText(msgText);
 
         builder.setContentIntent(pendingIntent);
-        builder.setDefaults(NotificationCompat.DEFAULT_SOUND);
+        builder.setDefaults(NotificationCompat.DEFAULT_LIGHTS);
         builder.setAutoCancel(true);
 
         NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);

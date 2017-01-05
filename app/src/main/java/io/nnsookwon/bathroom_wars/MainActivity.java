@@ -61,7 +61,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
@@ -115,6 +114,7 @@ public class MainActivity extends AppCompatActivity implements
     private FirebaseUser mFirebaseUser;
     private GeoFire restroomsGeoFire;
     private GeoQuery geoQuery;
+    private static boolean setPersistence = false;
 
     private Map<String, Marker> markers;
     private ArrayList<FacebookFriend> friendsList;
@@ -192,6 +192,10 @@ public class MainActivity extends AppCompatActivity implements
 
     private void initFirebase() {
         //init Firebase DB
+        if (!setPersistence) {
+            FirebaseDatabase.getInstance().setPersistenceEnabled(true); //enable offline capabilities
+            setPersistence = true;
+        }
         usersDatabaseRef =  FirebaseDatabase.getInstance().getReference("Users");
         restroomsDatabaseRef = FirebaseDatabase.getInstance().getReference("Restrooms");
         restroomsGeoFire = new GeoFire(FirebaseDatabase.getInstance().getReference("Restrooms GeoFire"));
@@ -252,6 +256,7 @@ public class MainActivity extends AppCompatActivity implements
                     RestroomVisit restroomVisit = new RestroomVisit(
                             key, restroomSelected, Calendar.getInstance().getTimeInMillis());
                     usersDatabaseRef.child(user.getUid() + "/restroomVisits/" + key).setValue(restroomVisit);
+                    showRecordConfirmation();
                     d.dismiss();
                 }
             });
@@ -266,6 +271,9 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
+    public void showRecordConfirmation() {
+        Toast.makeText(this, restroomSelected.getName() + " has been conquered", Toast.LENGTH_LONG).show();
+    }
     public void showAddRestroomLocationDialog(View v) {
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle("Add New Restroom Location");
@@ -298,7 +306,7 @@ public class MainActivity extends AppCompatActivity implements
                         RestroomVisit restroomVisit = new RestroomVisit(
                                 key, restroomSelected, Calendar.getInstance().getTimeInMillis());
                         usersDatabaseRef.child(user.getUid() + "/restroomVisits/" + key).setValue(restroomVisit);
-
+                        showRecordConfirmation();
                     }
                 }
                 d.dismiss();
@@ -703,7 +711,7 @@ public class MainActivity extends AppCompatActivity implements
                                 usersDatabaseRef.child(mFirebaseUser.getUid() + "/facebookId").
                                         setValue(user.getFacebookId());
                            }
-                        } catch (JSONException e) {
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
@@ -734,7 +742,7 @@ public class MainActivity extends AppCompatActivity implements
                                         friend.getId() + "/picture?type=normal");
                                 friendsList.add(friend);
                             }
-                        } catch (JSONException e) {
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
 
@@ -930,7 +938,7 @@ public class MainActivity extends AppCompatActivity implements
         MobileAds.initialize(getApplicationContext(), getResources().getString(R.string.ad_mob_app_id));
         adView = (AdView) findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder()
-                 .addTestDevice("70866E304DD6C756C42EAF5A20DB4BCC")
+                 .addTestDevice(getResources().getString(R.string.device_id))
                  .build();
         adView.setAdListener(new AdListener() {
             @Override
